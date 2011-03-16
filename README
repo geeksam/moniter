@@ -1,0 +1,4 @@
+At $WORK, we've started doing 90-minute iterations throughout the day.  After a whole two days, I'm getting tired of manually starting the timer partway through ("so... it's 12:16 now, which means we have about 74 minutes left, so I'll set this timer for 1:13") -- and writing Ruby is more fun than mucking about with calendar notifications.
+
+At the moment, this is purely for my own consumption.  I might write tests, I might not.  Use at your own risk.
+
