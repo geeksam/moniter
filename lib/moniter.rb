@@ -15,19 +15,19 @@ module Moniter
     end
   end
 
-  Iteration = Struct.new(:start_time, :end_time)
+  Timebox = Struct.new(:start_time, :end_time)
 
   class Schedule
-    attr_reader :iterations
+    attr_reader :timeboxes
 
     def initialize
-      @iterations = []
+      @timeboxes = []
     end
 
     def iteration(options = {})
       start_time = Time.parse(options[:starts_at])
       end_time   = Time.parse(options[:ends_at])
-      @iterations << Iteration.new(start_time, end_time)
+      @timeboxes << Timebox.new(start_time, end_time)
     end
 
     def notify_when(options = {})
