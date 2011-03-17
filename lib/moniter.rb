@@ -1,5 +1,6 @@
+$: << File.expand_path(File.dirname(__FILE__))
 require 'time'
-require File.join(File.dirname(__FILE__), *%w[core_ext])
+require 'core_ext'
 
 module Moniter
   module_function
