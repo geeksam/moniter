@@ -16,27 +16,36 @@ module Moniter
   end
 
   Timebox = Struct.new(:start_time, :end_time)
+  Notification = Struct.new(:anchor, :interval) do
+    def offset
+      multiplier = (:remain == anchor ? -1 : 1)
+      interval * multiplier
+    end
+  end
 
   class Schedule
-    attr_reader :timeboxes
+    attr_reader :timeboxes, :notifications
 
     def initialize
       @timeboxes = []
+      @notifications = []
     end
 
     def iteration(options = {})
-      start_time = Time.parse(options[:starts_at])
-      end_time   = Time.parse(options[:ends_at])
-      @timeboxes << Timebox.new(start_time, end_time)
+      timeboxes << Timebox.new(options[:starts_at], options[:ends_at])
     end
 
     def notify_when(options = {})
-
+      options = options.invert
+      notifications << Notification.new(:remain, options[:remain]) if options[:remain]
     end
 
     # Gimme some sugar, baby
     def each_iteration(&block)
       instance_eval(&block)
+    end
+
+    def current_iteration
     end
   end
 
