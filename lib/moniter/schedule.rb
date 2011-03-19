@@ -20,10 +20,12 @@ module Moniter
       Iteration.new(tb, notifications)
     end
 
+    def notify_at(anchor, options = {})
+      notifications << Notification.build_for_anchor(anchor, options)
+    end
+
     def notify_when(options = {})
-      options = options.invert
-      notifications << Notification.new(:remain,  options[:remain])  if options[:remain]
-      notifications << Notification.new(:elapsed, options[:elapsed]) if options[:elapsed]
+      notifications << Notification.build_from_options(options)
     end
 
     # Gimme some sugar, baby

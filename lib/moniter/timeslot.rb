@@ -10,7 +10,7 @@ module Moniter
 
     def include?(time)
       time = Time.parse(time) if time.kind_of? String
-      start_time <= time && time <= end_time
+      start_time <= time && time < end_time
     end
 
     def current?

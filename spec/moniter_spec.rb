@@ -19,26 +19,40 @@ describe Moniter do
   describe Moniter::Schedule do
     it "knows about notifications" do
       schedule = Moniter.build_schedule do
-        iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
-        each_iteration do
-          notify_when 15.minutes => :elapsed
-          notify_when 15.minutes => :remain
-        end
+        notify_at :start, :via => :foo                            # n1
+        notify_when 10.minutes => :elapsed, :via => :bar          # n2
+        notify_when 15.minutes => :remain, :via => [:foo, :bar]   # n3
+        notify_at :end, :via => :baz                              # n4
       end
 
-      schedule.notifications.length.should == 2
-      schedule.notifications.first.offset.should ==  15.minutes
-      schedule.notifications.last .offset.should == -15.minutes
+      schedule.notifications.length.should == 4
+      n1, n2, n3, n4 = *schedule.notifications
+
+      n1.anchor.should == :start
+      n2.anchor.should == :start
+      n3.anchor.should == :end
+      n4.anchor.should == :end
+
+      n1.offset.should be_zero
+      n2.offset.should ==  10.minutes
+      n3.offset.should == -15.minutes
+      n4.offset.should be_zero
+
+      n1.alert_methods.should == [:foo]
+      n2.alert_methods.should == [:bar]
+      n3.alert_methods.should == [:foo, :bar]
+      n4.alert_methods.should == [:baz]
     end
 
     it "knows which timeslot currently applies" do
       schedule = Moniter.build_schedule do
         iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
       end
-      at('8:59 AM')  { schedule.current_timeslot.should be_nil }
+
+      at('08:59 AM')  { schedule.current_timeslot.should be_nil }
       at('09:00 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
       at('09:23 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
-      at('10:00 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
+      at('10:00 AM') { schedule.current_timeslot.should be_nil }
       at('10:01 AM') { schedule.current_timeslot.should be_nil }
     end
   end
@@ -69,15 +83,10 @@ describe Moniter do
       iteration = @schedule.iteration_for('09:00 AM')
       iteration.start_time.should == Time.parse('09:00 AM')
       iteration.end_time.should   == Time.parse('10:00 AM')
+      iteration.alarm_times.first.should == Time.parse('09:45')
     end
   end
 
-  describe "timer loop" do
-    it "dispatches an alert if necessary, then sleeps"
-  end
-
-  describe "notifications" do
-    it "should, like, call Kernel#exec or something, man, because that would be cool"
-  end
+  it "should be able to accept named notification callbacks and call them when appropriate"
 
 end
