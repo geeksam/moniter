@@ -55,6 +55,8 @@ describe Moniter do
       at('10:00 AM') { schedule.current_timeslot.should be_nil }
       at('10:01 AM') { schedule.current_timeslot.should be_nil }
     end
+
+    it "should be able to accept named notification callbacks and call them when appropriate"
   end
 
   describe Moniter::Iteration do
@@ -87,6 +89,6 @@ describe Moniter do
     end
   end
 
-  it "should be able to accept named notification callbacks and call them when appropriate"
+  it "should wrap everything up in a Moniter function that sets up a schedule, then enters a notify-and-sleep loop"
 
 end

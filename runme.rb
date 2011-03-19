@@ -3,7 +3,7 @@ require File.join(File.dirname(__FILE__), *%w[lib moniter])
 
 # Here's the API I'd like to write against.
 
-Moniter.setup do
+Moniter do  # Not sure I can get away with this unless I change the module name -- look up how Float and Float() keep from colliding
   iteration :starts_at => '09:00 AM', :ends_at => '10:30 AM'
   iteration :starts_at => '10:30 AM', :ends_at => '12:00 PM'
   iteration :starts_at => '01:00 PM', :ends_at => '02:30 PM'
