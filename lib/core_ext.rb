@@ -1,9 +1,17 @@
 class Fixnum
-  def seconds
+  def minutes
     self * 60
   end
 
-  def minutes
-    seconds * 60
+  def hours
+    minutes * 60
   end
+
+  def days
+    hours * 24
+  end
+
+  alias :minute :minutes
+  alias :hour :hours
+  alias :day :days
 end

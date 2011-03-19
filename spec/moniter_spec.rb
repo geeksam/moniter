@@ -7,61 +7,77 @@ end
 
 describe Moniter do
 
-  it "has a notify_me method that takes a block and calls it...somewhere." do
-    pending "some justification for this method to actually exist"
-    called = false
-    Moniter.notify_me do
-      called = true
+  it "Can build a Schedule (slots in which are called timeslots)" do
+    schedule = Moniter.build_schedule do
+      iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
     end
-    called.should be_true
+    schedule.timeslots.length.should == 1
+    schedule.timeslots.first.starts_at.should == '09:00 AM'
+    schedule.timeslots.first.ends_at.should   == '10:00 AM'
   end
 
-  it "knows the iteration schedule (slots in which are called timeboxes)" do
-    schedule = Moniter.build_schedule do
-      iteration :starts_at => '09:00 AM', :ends_at => '10:30 AM'
+  describe Moniter::Schedule do
+    it "knows about notifications" do
+      schedule = Moniter.build_schedule do
+        iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
+        each_iteration do
+          notify_when 15.minutes => :elapsed
+          notify_when 15.minutes => :remain
+        end
+      end
+
+      schedule.notifications.length.should == 2
+      schedule.notifications.first.offset.should ==  15.minutes
+      schedule.notifications.last .offset.should == -15.minutes
     end
-    schedule.timeboxes.length.should == 1
-    schedule.timeboxes.first.start_time.should == '09:00 AM'
-    schedule.timeboxes.first.end_time.should   == '10:30 AM'
+
+    it "knows which timeslot currently applies" do
+      schedule = Moniter.build_schedule do
+        iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
+      end
+      at('8:59 AM')  { schedule.current_timeslot.should be_nil }
+      at('09:00 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
+      at('09:23 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
+      at('10:00 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
+      at('10:01 AM') { schedule.current_timeslot.should be_nil }
+    end
   end
 
-  it "knows about notifications" do
-    schedule = Moniter.build_schedule do
-      iteration :starts_at => '09:00 AM', :ends_at => '10:30 AM'
-      each_iteration do
+  describe Moniter::Iteration do
+    before(:each) do
+      Timecop.freeze(Time.now)
+      @schedule = Moniter.build_schedule do
+        iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
         notify_when 15.minutes => :remain
       end
+      @iteration = @schedule.iteration_for('09:00 AM')
+    end
+    after(:each) do
+      Timecop.return
     end
 
-    schedule.notifications.length.should == 1
-    schedule.notifications.first.offset.should == -15.minutes
-  end
+    it "has a start and end time that match a timeslot" do
+      @iteration.start_time.should == Time.parse('09:00 AM')
+      @iteration.end_time.should   == Time.parse('10:00 AM')
+    end
 
-  it "knows which iteration currently applies" do
-    schedule = Moniter.build_schedule do
-      iteration :starts_at => '09:00 AM', :ends_at => '10:30 AM'
+    it "has properly-timed alarms" do
+      @iteration.alarm_times.first.should == Time.parse('09:45')
     end
-    at '8:59 AM' do
-      schedule.current_iteration.should be_nil
-    end
-    at '09:00 AM' do
-      schedule.current_iteration.should_not be_nil
-    end
-    at '09:45 AM' do
-      schedule.current_iteration.should_not be_nil
-    end
-    at '10:30 AM' do
-      schedule.current_iteration.should_not be_nil
-    end
-    at '10:31 AM' do
-      schedule.current_iteration.should be_nil
+
+    it "has the right start and end time even if the program is left running until the next day" do
+      iteration = @schedule.iteration_for('09:00 AM')
+      iteration.start_time.should == Time.parse('09:00 AM')
+      iteration.end_time.should   == Time.parse('10:00 AM')
     end
   end
 
-  describe "Iteration" do
-    it "has a start and end time that match a timebox"
-    it "has properly-timed notifications"
-    it "has the right start and end time even if the program is left running until the next day"
+  describe "timer loop" do
+    it "dispatches an alert if necessary, then sleeps"
+  end
+
+  describe "notifications" do
+    it "should, like, call Kernel#exec or something, man, because that would be cool"
   end
 
 end
