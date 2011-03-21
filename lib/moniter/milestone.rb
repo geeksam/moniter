@@ -1,5 +1,5 @@
 module Moniter
-  Notification = Struct.new(:anchor, :interval, :alert_methods) do
+  Milestone = Struct.new(:anchor, :interval, :alert_methods) do
     class << self
       def build_for_anchor(anchor, options = {})
         alert_methods = [options[:via]]

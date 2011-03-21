@@ -1,10 +1,10 @@
 module Moniter
-  Iteration = Struct.new(:timeslot, :notifications) do
+  Iteration = Struct.new(:timeslot, :milestones) do
     extend Forwardable
     def_delegators :timeslot, :start_time, :end_time
 
     def alarm_times
-      notifications.map { |n|
+      milestones.map { |n|
         anchor = (n.offset < 0) ? end_time : start_time
         anchor + n.offset
       }

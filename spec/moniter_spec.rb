@@ -17,7 +17,7 @@ describe Moniter do
   end
 
   describe Moniter::Schedule do
-    it "knows about notifications" do
+    it "knows about milestones" do
       schedule = Moniter.build_schedule do
         notify_at :start, :via => :foo                            # n1
         notify_when 10.minutes => :elapsed, :via => :bar          # n2
@@ -25,8 +25,8 @@ describe Moniter do
         notify_at :end, :via => :baz                              # n4
       end
 
-      schedule.notifications.length.should == 4
-      n1, n2, n3, n4 = *schedule.notifications
+      schedule.milestones.length.should == 4
+      n1, n2, n3, n4 = *schedule.milestones
 
       n1.anchor.should == :start
       n2.anchor.should == :start
@@ -49,14 +49,14 @@ describe Moniter do
         iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
       end
 
-      at('08:59 AM')  { schedule.current_timeslot.should be_nil }
+      at('08:59 AM') { schedule.current_timeslot.should be_nil }
       at('09:00 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
       at('09:23 AM') { schedule.current_timeslot.should == schedule.timeslots.first }
       at('10:00 AM') { schedule.current_timeslot.should be_nil }
       at('10:01 AM') { schedule.current_timeslot.should be_nil }
     end
 
-    it "should be able to accept named notification callbacks and call them when appropriate"
+    it "should be able to accept named milestone callbacks and call them when appropriate"
   end
 
   describe Moniter::Iteration do

@@ -1,14 +1,14 @@
 require 'timeslot'
-require 'notification'
+require 'milestone'
 require 'iteration'
 
 module Moniter
   class Schedule
-    attr_reader :timeslots, :notifications
+    attr_reader :timeslots, :milestones
 
     def initialize
       @timeslots = []
-      @notifications = []
+      @milestones = []
     end
 
     def iteration(options = {})
@@ -17,15 +17,15 @@ module Moniter
 
     def iteration_for(time)
       tb = timeslots.detect { |tb| tb.include?(time) }
-      Iteration.new(tb, notifications)
+      Iteration.new(tb, milestones)
     end
 
     def notify_at(anchor, options = {})
-      notifications << Notification.build_for_anchor(anchor, options)
+      milestones << Milestone.build_for_anchor(anchor, options)
     end
 
     def notify_when(options = {})
-      notifications << Notification.build_from_options(options)
+      milestones << Milestone.build_from_options(options)
     end
 
     # Gimme some sugar, baby
