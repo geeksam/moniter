@@ -1,6 +1,7 @@
 require 'timeslot'
 require 'milestone'
 require 'iteration'
+require 'notification'
 
 module Moniter
   class Schedule

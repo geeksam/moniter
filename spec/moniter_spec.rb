@@ -19,29 +19,29 @@ describe Moniter do
   describe Moniter::Schedule do
     it "knows about milestones" do
       schedule = Moniter.build_schedule do
-        notify_at :start, :via => :foo                            # n1
-        notify_when 10.minutes => :elapsed, :via => :bar          # n2
-        notify_when 15.minutes => :remain, :via => [:foo, :bar]   # n3
-        notify_at :end, :via => :baz                              # n4
+        notify_at :start, :via => :foo                            # m1
+        notify_when 10.minutes => :elapsed, :via => :bar          # m2
+        notify_when 15.minutes => :remain, :via => [:foo, :bar]   # m3
+        notify_at :end, :via => :baz                              # m4
       end
 
       schedule.milestones.length.should == 4
-      n1, n2, n3, n4 = *schedule.milestones
+      m1, m2, m3, m4 = *schedule.milestones
 
-      n1.anchor.should == :start
-      n2.anchor.should == :start
-      n3.anchor.should == :end
-      n4.anchor.should == :end
+      m1.anchor.should == :start
+      m2.anchor.should == :start
+      m3.anchor.should == :end
+      m4.anchor.should == :end
 
-      n1.offset.should be_zero
-      n2.offset.should ==  10.minutes
-      n3.offset.should == -15.minutes
-      n4.offset.should be_zero
+      m1.offset.should be_zero
+      m2.offset.should ==  10.minutes
+      m3.offset.should == -15.minutes
+      m4.offset.should be_zero
 
-      n1.alert_methods.should == [:foo]
-      n2.alert_methods.should == [:bar]
-      n3.alert_methods.should == [:foo, :bar]
-      n4.alert_methods.should == [:baz]
+      m1.alert_methods.should == [:foo]
+      m2.alert_methods.should == [:bar]
+      m3.alert_methods.should == [:foo, :bar]
+      m4.alert_methods.should == [:baz]
     end
 
     it "knows which timeslot currently applies" do
@@ -77,15 +77,15 @@ describe Moniter do
       @iteration.end_time.should   == Time.parse('10:00 AM')
     end
 
-    it "has properly-timed alarms" do
-      @iteration.alarm_times.first.should == Time.parse('09:45')
+    it "has properly-timed notifications" do
+      @iteration.notifications.first.time.should == Time.parse('09:45')
     end
 
     it "has the right start and end time even if the program is left running until the next day" do
       iteration = @schedule.iteration_for('09:00 AM')
       iteration.start_time.should == Time.parse('09:00 AM')
       iteration.end_time.should   == Time.parse('10:00 AM')
-      iteration.alarm_times.first.should == Time.parse('09:45')
+      iteration.notifications.first.time.should == Time.parse('09:45')
     end
   end
 
