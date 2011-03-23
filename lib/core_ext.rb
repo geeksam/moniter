@@ -15,3 +15,9 @@ class Fixnum
   alias :hour :hours
   alias :day :days
 end
+
+class Time
+  def to_moniter_s
+    strftime('%I:%M %p')
+  end
+end

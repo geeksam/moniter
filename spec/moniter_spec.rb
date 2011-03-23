@@ -64,9 +64,11 @@ describe Moniter do
       Timecop.freeze(Time.now)
       @schedule = Moniter.build_schedule do
         iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
+        notify_when 20.minutes => :elapsed
         notify_when 15.minutes => :remain
       end
       @iteration = @schedule.iteration_for('09:00 AM')
+      @n1, @n2 = *@iteration.notifications
     end
     after(:each) do
       Timecop.return
@@ -78,14 +80,48 @@ describe Moniter do
     end
 
     it "has properly-timed notifications" do
-      @iteration.notifications.first.time.should == Time.parse('09:45')
+      @iteration.notifications.length.should == 2
+      @n1.time.should == Time.parse('09:20')
+      @n2.time.should == Time.parse('09:45')
     end
 
     it "has the right start and end time even if the program is left running until the next day" do
+      Timecop.freeze(Time.now + 1.day)
       iteration = @schedule.iteration_for('09:00 AM')
       iteration.start_time.should == Time.parse('09:00 AM')
       iteration.end_time.should   == Time.parse('10:00 AM')
-      iteration.notifications.first.time.should == Time.parse('09:45')
+
+      @n1.time.should == Time.parse('09:20')
+      @n2.time.should == Time.parse('09:45')
+    end
+
+    describe "#notify!" do
+      it "does nothing if there are no overdue alarms" do
+        at '09:15 AM' do
+          @n1.should_not_receive(:alert)
+          @n2.should_not_receive(:alert)
+          @iteration.notify!
+          @iteration.notifications.should == [@n1, @n2]
+        end
+      end
+
+      it "removes and calls the first notification once its time is *right now*" do
+        at '09:20 AM' do
+          @n1.should_receive(:alert)
+          @n2.should_not_receive(:alert)
+          @iteration.notify!
+          @iteration.notifications.should == [@n2]
+        end
+      end
+
+      it "removes all non-future notifications, but only calls the last one (if, e.g., sleep time was too long)" do
+        at '09:45 AM' do
+          @n1.should_not_receive(:alert)
+          @n2.should_receive(:alert)
+          @iteration.notify!
+          @iteration.notifications.should be_empty
+        end
+      end
     end
   end
 

@@ -13,5 +13,10 @@ module Moniter
       anchor = (milestone.offset < 0) ? end_time : start_time
       anchor + milestone.offset
     end
+
+    def notify!
+      n = notifications.shift until notifications.empty? || notifications.first.future?
+      n && n.alert
+    end
   end
 end
