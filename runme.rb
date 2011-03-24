@@ -5,10 +5,10 @@ require File.join(File.dirname(__FILE__), *%w[lib moniter])
 
 Moniter do  # Not sure I can get away with this unless I change the module name -- look up how Float and Float() keep from colliding
   to_notify_via :growl do |message|
-    # command line for growl
+    `growlnotify -s -t "Iteration Timer" -m "#{message}"`
   end
   to_notify_via :speech do |message|
-    # command line for speech
+    `say "#{message}"`
   end
 
   iteration :starts_at => '09:00 AM', :ends_at => '10:30 AM'
@@ -19,10 +19,12 @@ Moniter do  # Not sure I can get away with this unless I change the module name 
 
   each_iteration do
     # Could also do:  notify_when 30.minutes => :elapsed, :via => [:growl]
-    notify_when 60.minutes => :remain, :via => [:growl]
-    notify_when 30.minutes => :remain, :via => [:growl]
-    notify_when 15.minutes => :remain, :via => [:growl, :speech]
-    notify_when  5.minutes => :remain, :via => [:growl, :speech]
-    notify_when  2.minutes => :remain, :via => [:growl, :speech]
+    notify_at :start, :via => [:growl, :speech]
+    notify_when 30.minutes => :elapsed, :via => [:growl]
+    notify_when 30.minutes => :remain,  :via => [:growl]
+    notify_when 15.minutes => :remain,  :via => [:growl, :speech]
+    notify_when  5.minutes => :remain,  :via => [:growl, :speech]
+    notify_when  2.minutes => :remain,  :via => [:growl, :speech]
+    notify_at :end, :via => [:growl, :speech]
   end
 end

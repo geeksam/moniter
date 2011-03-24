@@ -14,3 +14,11 @@ module Moniter
     end
   end
 end
+
+def Moniter(&block)
+  schedule = Moniter.build_schedule(&block)
+  loop do
+    schedule.tick
+    sleep schedule.sleep_interval
+  end
+end

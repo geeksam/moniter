@@ -27,5 +27,24 @@ module Moniter
       multiplier = (:end == anchor ? -1 : 1)
       interval * multiplier
     end
+
+    def message(iteration)
+      return 'Iteration started'  if boundary? && start?
+      return 'Iteration complete' if boundary? && end?
+      return "#{iteration.minutes_elapsed} minutes elapsed"     if start?
+      return "#{iteration.minutes_remaining} minutes remaining" if end?
+    end
+
+    def start?
+      :start == anchor
+    end
+
+    def end?
+      :end == anchor
+    end
+
+    def boundary?
+      offset.zero?
+    end
   end
 end

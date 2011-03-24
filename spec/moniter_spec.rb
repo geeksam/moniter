@@ -11,6 +11,8 @@ describe Moniter do
     @bar_notifier = bar_notifier = mock('bar notifier')
     @baz_notifier = baz_notifier = mock('baz notifier')
     @schedule = Moniter.build_schedule do
+      clock_resolution 1.minute
+
       to_notify_via(:foo) { |message| foo_notifier.spiffy(message) }
       to_notify_via(:bar) { |message| bar_notifier.spiffy(message) }
       to_notify_via(:baz) { |message| baz_notifier.spiffy(message) }
@@ -25,6 +27,10 @@ describe Moniter do
   end
 
   describe Moniter::Schedule do
+    it "has a resolution" do
+      @schedule.sleep_interval.should == 1.minute
+    end
+
     it "has timeslots" do
       @schedule.timeslots.length.should == 1
       @schedule.timeslots.first.starts_at.should == '09:00 AM'
@@ -51,35 +57,7 @@ describe Moniter do
       m4.alert_methods.should == [:baz]
     end
 
-    it "knows about alert callbacks" do
-      @schedule.alert_callbacks.length.should == 3
-      @schedule.alert_callbacks[:foo].should be_kind_of(Proc)
-      @schedule.alert_callbacks[:bar].should be_kind_of(Proc)
-      @schedule.alert_callbacks[:baz].should be_kind_of(Proc)
-    end
-
-    it "knows which timeslot currently applies" do
-      at('08:59 AM') { @schedule.current_timeslot.should be_nil }
-      at('09:00 AM') { @schedule.current_timeslot.should == @schedule.timeslots.first }
-      at('09:23 AM') { @schedule.current_timeslot.should == @schedule.timeslots.first }
-      at('10:00 AM') { @schedule.current_timeslot.should be_nil }
-      at('10:01 AM') { @schedule.current_timeslot.should be_nil }
-    end
-
-    it "can create the current_iteration" do
-      at('08:59 AM') { @schedule.current_iteration.should be_nil }
-      at('09:00 AM') { @schedule.current_iteration.should be_kind_of(Moniter::Iteration) }
-      at('09:23 AM') { @schedule.current_iteration.should be_kind_of(Moniter::Iteration) }
-      pending
-      # at('10:00 AM') { @schedule.current_iteration.should be_nil }
-      # at('10:01 AM') { @schedule.current_iteration.should be_nil }
-    end
-
     describe "named milestone callbacks" do
-      before(:each) do
-        at('08:59 AM') { @schedule.tick }
-      end
-
       it "calls the 'iteration started' notification when the iteration starts" do
         at '09:00 AM' do
           @foo_notifier.should_receive(:spiffy).with('Iteration started')
@@ -125,14 +103,18 @@ describe Moniter do
       end
 
       it "calls the 'iteration finished' notification when 0 minutes remain" do
-        pending "code that doesn't go into an infinite loop"
+        at('09:00 AM') do
+          @foo_notifier.should_receive(:spiffy).with('Iteration started')
+          @schedule.tick
+        end
+
         at '10:00 AM' do
           @baz_notifier.should_receive(:spiffy).with('Iteration complete')
           @schedule.tick
         end
       end
 
-      it "calls all of the notifications (except maybe the last one) at appropriate times" do
+      it "calls all of the notifications, in order, at appropriate times" do
         at '09:00 AM' do
           @foo_notifier.should_receive(:spiffy).with('Iteration started')
           @schedule.tick
@@ -149,8 +131,6 @@ describe Moniter do
           @schedule.tick
         end
 
-        # last one?
-        pending
         at '10:00 AM' do
           @baz_notifier.should_receive(:spiffy).with('Iteration complete')
           @schedule.tick
@@ -161,17 +141,8 @@ describe Moniter do
 
   describe Moniter::Iteration do
     before(:each) do
-      Timecop.freeze(Time.now)
-      # @schedule = Moniter.build_schedule do
-      #   iteration :starts_at => '09:00 AM', :ends_at => '10:00 AM'
-      #   notify_when 20.minutes => :elapsed
-      #   notify_when 15.minutes => :remain
-      # end
       @iteration = @schedule.iteration_for('09:00 AM')
       @n1, @n2, @n3, @n4 = *@iteration.notifications
-    end
-    after(:each) do
-      Timecop.return
     end
 
     it "has a start and end time that match a timeslot" do
@@ -198,33 +169,6 @@ describe Moniter do
       @n3.time.should == Time.parse('09:45')
       @n4.time.should == Time.parse('10:00')
     end
-
-    describe "#notify!" do
-      it "does nothing if there are no overdue alarms" do
-        at '08:59 AM' do
-          @iteration.notify!
-          @iteration.notifications.should == [@n1, @n2, @n3, @n4]
-        end
-      end
-
-      it "removes and calls the first notification once its time is *right now*" do
-        at '09:00 AM' do
-          @n1.should_receive(:perform).with(@iteration)
-          @iteration.notify!
-          @iteration.notifications.should == [@n2, @n3, @n4]
-        end
-      end
-
-      it "removes all non-future notifications, but only calls the last one (if, e.g., sleep time was too long)" do
-        at '09:10 AM' do
-          @n2.should_receive(:perform).with(@iteration)
-          @iteration.notify!
-          @iteration.notifications.should == [@n3, @n4]
-        end
-      end
-    end
   end
-
-  it "should wrap everything up in a Moniter function that sets up a schedule, then enters a notify-and-sleep loop"
 
 end

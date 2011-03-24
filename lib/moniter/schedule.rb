@@ -5,15 +5,20 @@ require 'notification'
 
 module Moniter
   class Schedule
-    attr_reader :timeslots, :milestones, :alert_callbacks
+    attr_reader :timeslots, :milestones, :alert_callbacks, :sleep_interval
 
     def initialize
       @timeslots = []
       @milestones = []
       @alert_callbacks = {}
+      @sleep_interval = 30.seconds
     end
 
     ##### These methods comprise the public API to be used in client scripts #####
+
+    def clock_resolution(time_in_seconds)
+      @sleep_interval = time_in_seconds
+    end
 
     def iteration(options = {})
       timeslots << Timeslot.new(options[:starts_at], options[:ends_at])
@@ -40,17 +45,9 @@ module Moniter
     ##### End of scripting API; these are only public to make testing a little easier #####
 
     def iteration_for(time)
-      ts = timeslot_for(time)
+      ts = timeslots.detect { |ts| ts.include?(time) }
       return if ts.nil?
       Iteration.new(self, ts)
-    end
-
-    def timeslot_for(time)
-      timeslots.detect { |ts| ts.include?(time) }
-    end
-
-    def current_timeslot
-      timeslot_for(Time.now)
     end
 
     def current_iteration
@@ -58,21 +55,13 @@ module Moniter
       @current_iteration = iteration_for(Time.now)
     end
 
-    def load_current_or_next_iteration(resolution = 15.minutes)
-      return @current_or_next_iteration unless @current_or_next_iteration.nil?
-      t = Time.now
-      while @current_or_next_iteration.nil?
-        @current_or_next_iteration = iteration_for(t)
-        puts "Iteration for #{t.to_moniter_s}? #{@current_or_next_iteration ? 'yup!' : 'nope.'}"
-        t += resolution
-      end
-      puts "done!"
-    end
-
     def tick
-      load_current_or_next_iteration
-      @current_or_next_iteration && @current_or_next_iteration.notify!
-      @current_or_next_iteration = nil if @current_or_next_iteration != current_iteration
+      if @prev_iteration && (@prev_iteration != current_iteration)
+        # We've missed the end of an iteration; give it a chance to notify the user that it's over
+        @prev_iteration.notify!
+      end
+      @prev_iteration ||= current_iteration
+      current_iteration && current_iteration.notify!
       nil
     end
   end
