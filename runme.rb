@@ -1,12 +1,11 @@
 #!/usr/bin/env ruby
 require File.join(File.dirname(__FILE__), *%w[lib moniter])
 
-# Here's the API I'd like to write against.
-
-Moniter do  # Not sure I can get away with this unless I change the module name -- look up how Float and Float() keep from colliding
+Moniter do
   to_notify_via :growl do |message|
     `growlnotify -s -t "Iteration Timer" -m "#{message}"`
   end
+
   to_notify_via :speech do |message|
     `say "#{message}"`
   end
@@ -18,13 +17,11 @@ Moniter do  # Not sure I can get away with this unless I change the module name 
   iteration :starts_at => '04:00 PM', :ends_at => '05:30 PM'
 
   each_iteration do
-    # Could also do:  notify_when 30.minutes => :elapsed, :via => [:growl]
     notify_at :start, :via => [:growl, :speech]
     notify_when 30.minutes => :elapsed, :via => [:growl]
     notify_when 30.minutes => :remain,  :via => [:growl]
     notify_when 15.minutes => :remain,  :via => [:growl, :speech]
     notify_when  5.minutes => :remain,  :via => [:growl, :speech]
-    notify_when  2.minutes => :remain,  :via => [:growl, :speech]
     notify_at :end, :via => [:growl, :speech]
   end
 end
