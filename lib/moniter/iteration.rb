@@ -10,7 +10,7 @@ module Moniter
     end
 
     def alarm_time(milestone)
-      anchor = (milestone.offset < 0) ? end_time : start_time
+      anchor = self.send("#{milestone.anchor}_time")
       anchor + milestone.offset
     end
 
