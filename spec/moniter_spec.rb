@@ -137,6 +137,8 @@ describe Moniter do
         end
       end
     end
+
+    it "should perform notifications that fall within Time.now + offset, so we don't get '14 minutes remaining' for our 15-minute notification"
   end
 
   describe Moniter::Iteration do
