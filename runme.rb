@@ -1,24 +1,30 @@
 #!/usr/bin/env ruby
 require File.join(File.dirname(__FILE__), *%w[lib moniter])
 
+def growl(subject, message, sticky = false)
+  `growlnotify #{'-s' if sticky} -t "#{subject}" -m "#{message}"`
+end
+
 Moniter do
   clock_resolution 5.seconds
 
   to_notify_via :growl do |message|
-    `growlnotify -s -t "Iteration Timer" -m "#{message}"`
+    growl 'Iteration Timer', message
   end
 
   to_notify_via :speech do |message|
     `say "#{message}"`
   end
 
-  to_notify_via :whats_next do
-    `growlnotify -s -t "What's Next?" -m "Wrap up, and consider what you'll do next iteration..."`
+  to_notify_via :whats_next do |_|
+    growl "What's Next?", "Wrap up, and consider what you'll do next iteration...", true
   end
 
-  to_notify_via :harvest_reminder do
-    `growlnotify -s -t "Time Tracking" -m "Time to update Harvest!"`
+  to_notify_via :harvest_reminder do |_|
+    growl "Time Tracking", "Time to update Harvest!", true
   end
+
+  workdays_are mon..fri
 
   iteration :starts_at => '09:00 AM', :ends_at => '10:30 AM'
   iteration :starts_at => '10:30 AM', :ends_at => '12:00 PM'
