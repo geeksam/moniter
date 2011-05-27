@@ -37,6 +37,30 @@ describe Moniter do
       @schedule.timeslots.first.ends_at.should   == '10:00 AM'
     end
 
+    it "can be told what the workdays are" do
+      @schedule.instance_eval { workdays_are mon, tue, wed, thu, fri }
+      @schedule.workdays.should == [1, 2, 3, 4, 5]
+
+      @schedule.instance_eval { workdays_are mon, wed, fri }
+      @schedule.workdays.should == [1, 3, 5]
+
+      @schedule.instance_eval { workdays_are mon..wed, fri }
+      @schedule.workdays.should == [1, 2, 3, 5]
+    end
+
+    it "knows to STFU on non-workdays" do
+      @schedule.instance_eval { workdays_are mon..fri }
+      @schedule.workdays.should == [1, 2, 3, 4, 5]
+
+      at('2011-05-01 09:30 AM') { @schedule.iteration_for(Time.now).should     be_nil }
+      at('2011-05-02 09:30 AM') { @schedule.iteration_for(Time.now).should_not be_nil }
+      at('2011-05-03 09:30 AM') { @schedule.iteration_for(Time.now).should_not be_nil }
+      at('2011-05-04 09:30 AM') { @schedule.iteration_for(Time.now).should_not be_nil }
+      at('2011-05-05 09:30 AM') { @schedule.iteration_for(Time.now).should_not be_nil }
+      at('2011-05-06 09:30 AM') { @schedule.iteration_for(Time.now).should_not be_nil }
+      at('2011-05-07 09:30 AM') { @schedule.iteration_for(Time.now).should     be_nil }
+    end
+
     it "knows about milestones" do
       @schedule.milestones.length.should == 4
       m1, m2, m3, m4 = *@schedule.milestones

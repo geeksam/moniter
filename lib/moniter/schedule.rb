@@ -20,6 +20,22 @@ module Moniter
       @sleep_interval = time_in_seconds
     end
 
+    def workdays
+      @workdays ||= (1..7).to_a
+    end
+
+    def workdays_are(*args)
+      @workdays = []
+      args.each do |arg|
+        case arg
+        when Integer
+          workdays << arg
+        when Range
+          arg.each { |wday| workdays << wday }
+        end
+      end
+    end
+
     def iteration(options = {})
       timeslots << Timeslot.new(options[:starts_at], options[:ends_at])
     end
@@ -45,6 +61,8 @@ module Moniter
     ##### End of scripting API; these are only public to make testing a little easier #####
 
     def iteration_for(time)
+      time = Time.parse(time) unless time.kind_of?(Time)
+      return unless workdays.include?(time.wday)
       ts = timeslots.detect { |ts| ts.include?(time) }
       return if ts.nil?
       Iteration.new(self, ts)
@@ -63,6 +81,10 @@ module Moniter
       @prev_iteration ||= current_iteration
       current_iteration && current_iteration.notify!
       nil
+    end
+
+    %w[sun mon tue wed thu fri sat].each_with_index do |weekday, i|
+      define_method(weekday) { i }
     end
   end
 end
